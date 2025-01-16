@@ -1,5 +1,7 @@
+import os
 import sys
 import magic
+import torch
 import whisper
 import traceback
 from pathlib import Path
@@ -23,7 +25,8 @@ class SpeechScribe:
     def __init__(self, model: str = "small.en"):
 
         #-Base objects-#
-        self.model = model
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = whisper.load_model(model, device = device)
 
 
     #-Function to prepare the input file-#
@@ -50,64 +53,24 @@ class SpeechScribe:
             #-Processing the input file and getting the updated filepath-#
             filepath = self.__prepare_input(filepath)
 
-            
+            #-Creating the transcription filepath-#
+            transcribed_path = f"{Path(filepath).stem}_transcription.txt"
 
+            #-Transcribing the audio file-#
+            result = self.model.transcribe(filepath, fp16 = False)
+
+            #-Writing the transcription to a file-#
+            with open(transcribed_path, "w", encoding = "utf-8") as file:
+                file.write(result["text"])
+
+            print(f"Transcription saved in [{transcribed_path}] successfully.")
 
         #-Except block to handle exceptions-#
         except:
             traceback.print_exc()
 
+        #-Some cleanup code-#
+        finally:
 
-def convert_audio_to_desired_format(input_audio_file, output_audio_file="output.wav"):
-
-    try:
-        # Load the audio file
-        audio: AudioSegment = AudioSegment.from_file(input_audio_file)
-
-        # Check if the file is already in the desired format
-        if audio.frame_rate == 16000 and audio.channels == 1 and "wav" in magic.from_file(input_audio_file, mime = True):
-            print("Audio file is already in the desired format. No conversion needed.")
-            return input_audio_file
-
-        # Set desired properties
-        audio = audio.set_frame_rate(16000).set_channels(1)
-
-        # Export to the desired format
-        audio.export(output_audio_file, format="wav")
-        print(f"Audio converted and saved as: {output_audio_file}")
-        return output_audio_file
-    except Exception as e:
-        print(f"Error during audio conversion: {e}")
-        return None
-
-
-def transcribe_with_whisper(audio_file):
-
-    try:
-        # Load the Whisper model
-        model = whisper.load_model("small.en", device="cpu")
-        
-        # Transcribe the audio file
-        result = model.transcribe(audio_file, fp16 = False)
-        
-        # Get the transcribed text
-        transcription = result["text"]
-        
-        print("Transcription completed with Whisper:")
-        print(transcription)
-        return transcription
-    except Exception as e:
-        print(f"Error during transcription: {e}")
-        return None
-
-
-mime = magic.from_file("Test.mkv", mime = True)
-print(mime)
-mime = magic.from_file("Test.mp4", mime = True)
-print(mime)
-mime = magic.from_file("Test.wav", mime = True)
-print(mime)
-
-# convert_audio_to_desired_format("Test.wav")
-extract_audio_from_video("Test.mp4")
-# transcribe_with_whisper("Test.wav")
+            #-Removing all the temporarily created audio files-#
+            [os.remove(file) for file in Path.cwd().glob("temp_*")]

@@ -11,7 +11,7 @@ def get_audio(input_file: str, output_filepath: str = None):
 
     #-Creating output filepath if not given-#
     if not output_filepath:
-        output_filepath = Path.cwd() / f"{Path(input_file).stem}.wav"
+        output_filepath = Path.cwd() / f"temp_{Path(input_file).stem}.wav"
 
     #-Returning the input path if the file is already in the desired format-#
     if audio.frame_rate == 16000 and audio.channels == 1 and "wav" in magic.from_file(input_file, mime = True):
