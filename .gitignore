@@ -7,7 +7,8 @@ __pycache__/
 *.so
 
 # Custom files
-
+Test.mp4
+Test.wav
 
 # Distribution / packaging
 .Python
