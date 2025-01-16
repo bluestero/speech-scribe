@@ -1,48 +1,65 @@
+import sys
 import magic
-import torch
 import whisper
+import traceback
+from pathlib import Path
 from pydub import AudioSegment
 
+#-Custom imports-#
+sys.path.insert(0, Path(__file__).parent)
+import utils
 
-def extract_audio_from_video(video_file, output_audio_file="output.wav"):
-    """
-    Extracts audio from a video file and saves it in the desired format (WAV, 16 kHz, mono).
-    
-    Args:
-        video_file (str): Path to the input video file.
-        output_audio_file (str): Path to save the extracted audio file (default: "output.wav").
-    
-    Returns:
-        str: Path to the extracted audio file.
-    """
-    try:
-        # Load the audio from the video file
-        audio = AudioSegment.from_file(video_file)
-        
-        # Set desired properties
-        audio = audio.set_frame_rate(16000).set_channels(1)
-        
-        # Export to the desired format
-        audio.export(output_audio_file, format="wav")
-        print(f"Audio extracted and saved as: {output_audio_file}")
-        return output_audio_file
-    except Exception as e:
-        print(f"Error during audio extraction: {e}")
-        return None
+
+#-Class object for Invalid input file exception-#
+class InvalidInputFile(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)
+
+
+#-Main class for the SpeechScribe-#
+class SpeechScribe:
+
+    #-Init function for base initializations-#
+    def __init__(self, model: str = "small.en"):
+
+        #-Base objects-#
+        self.model = model
+
+
+    #-Function to prepare the input file-#
+    def __prepare_input(self, filepath: str) -> None:
+
+        #-Getting the mime-type of the input file-#
+        mime = magic.from_file(filepath, mime = True)
+
+        #-Extracting the audio if the mime-type of the file contains audio / video-#
+        if "audio" in mime or "video" in mime:
+            return utils.get_audio(filepath)
+
+        #-Else raising InvalidInputFile exception-#
+        else:
+            raise InvalidInputFile(f"The file [{filepath}] is not a valid audio / video file.")
+
+
+    #-Function to transcribe the audio file-#
+    def transcribe(self, filepath: str) -> bool:
+
+        #-Try block to handle exceptions-#
+        try:
+
+            #-Processing the input file and getting the updated filepath-#
+            filepath = self.__prepare_input(filepath)
+
+            
+
+
+        #-Except block to handle exceptions-#
+        except:
+            traceback.print_exc()
 
 
 def convert_audio_to_desired_format(input_audio_file, output_audio_file="output.wav"):
-    """
-    Converts an audio file to the desired format (WAV, 16 kHz, mono) 
-    if it is not already in the desired format.
-    
-    Args:
-        input_audio_file (str): Path to the input audio file.
-        output_audio_file (str): Path to save the converted audio file (default: "output.wav").
-    
-    Returns:
-        str: Path to the converted audio file or the input file if no conversion was needed.
-    """
+
     try:
         # Load the audio file
         audio: AudioSegment = AudioSegment.from_file(input_audio_file)
@@ -65,15 +82,7 @@ def convert_audio_to_desired_format(input_audio_file, output_audio_file="output.
 
 
 def transcribe_with_whisper(audio_file):
-    """
-    Transcribes audio to text using OpenAI's Whisper API.
 
-    Args:
-        audio_file (str): Path to the audio file.
-
-    Returns:
-        str: Transcribed text.
-    """
     try:
         # Load the Whisper model
         model = whisper.load_model("small.en", device="cpu")
@@ -99,6 +108,6 @@ print(mime)
 mime = magic.from_file("Test.wav", mime = True)
 print(mime)
 
-# extract_audio_from_video("Test.mp4")
 # convert_audio_to_desired_format("Test.wav")
-transcribe_with_whisper("Test.wav")
+extract_audio_from_video("Test.mp4")
+# transcribe_with_whisper("Test.wav")
