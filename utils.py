@@ -1,3 +1,5 @@
+import os
+import shutil
 import magic
 from pathlib import Path
 from pydub import AudioSegment
@@ -13,10 +15,19 @@ def get_audio(input_file: str, output_filepath: str = None):
     if not output_filepath:
         output_filepath = Path.cwd() / f"temp_{Path(input_file).stem}.wav"
 
-    #-Returning the input path if the file is already in the desired format-#
+    #-Checking if the file is already in the desired format-#
     if audio.frame_rate == 16000 and audio.channels == 1 and "wav" in magic.from_file(input_file, mime = True):
-        print("Audio already in the desired format.")
-        return input_file
+        print("Audio already in the desired format. Creating a temp copy of it.")
+
+        #-Removing the file if exists already-#
+        if Path.exists(output_filepath):
+            os.remove(output_filepath)
+
+        #-Creating a copy of the file-#
+        shutil.copy(input_file, output_filepath)
+
+        #-Returning the input path-#
+        return output_filepath
 
     #-Setting the desired sample rate-#
     audio = audio.set_frame_rate(16000).set_channels(1)

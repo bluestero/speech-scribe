@@ -5,7 +5,7 @@ import torch
 import whisper
 import traceback
 from pathlib import Path
-from pydub import AudioSegment
+
 
 #-Custom imports-#
 sys.path.insert(0, Path(__file__).parent)
@@ -25,6 +25,7 @@ class SpeechScribe:
     def __init__(self, model: str = "small.en"):
 
         #-Base objects-#
+        self.current_dir = Path(__file__).parent
         device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = whisper.load_model(model, device = device)
 
@@ -51,19 +52,19 @@ class SpeechScribe:
         try:
 
             #-Processing the input file and getting the updated filepath-#
-            filepath = self.__prepare_input(filepath)
+            processed_filepath = self.__prepare_input(filepath).__str__()
 
             #-Creating the transcription filepath-#
-            transcribed_path = f"{Path(filepath).stem}_transcription.txt"
+            output_filepath = self.current_dir / f"{Path(filepath).stem}_transcription.txt"
 
             #-Transcribing the audio file-#
-            result = self.model.transcribe(filepath, fp16 = False)
+            result = self.model.transcribe(processed_filepath, fp16 = False, verbose = True)
 
             #-Writing the transcription to a file-#
-            with open(transcribed_path, "w", encoding = "utf-8") as file:
+            with open(output_filepath, "w", encoding = "utf-8") as file:
                 file.write(result["text"])
 
-            print(f"Transcription saved in [{transcribed_path}] successfully.")
+            print(f"Transcription saved in [{output_filepath}] successfully.")
 
         #-Except block to handle exceptions-#
         except:
@@ -72,5 +73,9 @@ class SpeechScribe:
         #-Some cleanup code-#
         finally:
 
-            #-Removing all the temporarily created audio files-#
-            [os.remove(file) for file in Path.cwd().glob("temp_*")]
+            #-Removing temp temporary audio file-#
+            os.remove(processed_filepath)
+
+
+speech_scribe = SpeechScribe()
+speech_scribe.transcribe("sample.wav")
