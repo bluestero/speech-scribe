@@ -53,6 +53,8 @@ class SpeechScribe:
 
             #-Processing the input file and getting the updated filepath-#
             processed_filepath = self.__prepare_input(filepath).__str__()
+            print(processed_filepath)
+            raise Exception
 
             #-Creating the transcription filepath-#
             output_filepath = self.current_dir / f"{Path(filepath).stem}_transcription.txt"
@@ -73,9 +75,10 @@ class SpeechScribe:
         #-Some cleanup code-#
         finally:
 
-            #-Removing temp temporary audio file-#
-            os.remove(processed_filepath)
+            #-Removing temp temporary audio file if created-#
+            if Path.exists(processed_filepath):
+                os.remove(processed_filepath)
 
 
 speech_scribe = SpeechScribe()
-speech_scribe.transcribe("sample.wav")
+speech_scribe.transcribe("Test.ts")

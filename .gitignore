@@ -9,6 +9,7 @@ __pycache__/
 # Custom files
 Test.mp4
 Test.wav
+Test.ts
 
 # Distribution / packaging
 .Python
